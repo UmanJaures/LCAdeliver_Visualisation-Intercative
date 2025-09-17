@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Interactive — fonctions</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 18px; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    .controls { display:flex; gap:18px; flex-wrap:wrap; margin-bottom:12px; }
+    .card { border:1px solid #ddd; padding:12px; border-radius:8px; min-width:260px; background:#fbfbfb;}
+    label{display:block; font-weight:600; margin-bottom:6px;}
+    input[type=range]{ width:100%; }
+    .row { display:flex; gap:8px; align-items:center; margin-top:6px; }
+    .small { font-size:13px; color:#333 }
+    #plot { width:100%; height:600px; }
+    footer { margin-top:12px; font-size:13px; color:#666 }
+    .points { font-size:13px; margin-top:6px; color:#222 }
+  </style>
+</head>
+<body>
+  <h1>LCAdeliver — Visualisation interactive </h1> <br>
+    <h1>Trois fonctions caracterisants les benefices par commandes pour des intervalles de montant de commandes</h1>
+  <p class="small">Contrôlez les intervalles (start/end) pour chaque fonction. Les courbes se recalculent automatiquement.</p>
+
+  <div class="controls">
+    <div class="card">
+  <label>f1(x) = 73x / 1250  — domaine minimal 1250 → maximal 10000</label>
+  <div class="row"><input id="f1_start" type="range" min="1250" max="9000" step="10" value="1250"><span id="f1_start_val">1250</span></div>
+  <div class="row"><input id="f1_end"   type="range" min="1260" max="10000" step="10" value="10000"><span id="f1_end_val">10000</span></div>
+      <div class="row"><input type="checkbox" id="show_f1" checked> <label for="show_f1" style="display:inline;margin-left:6px">Afficher f1</label></div>
+    </div>
+
+    <div class="card">
+  <label>f2(x) = -x/50 + 100 — domaine minimal 1250 → maximal 10000</label>
+  <div class="row"><input id="f2_start" type="range" min="1250" max="9000" step="10" value="1250"><span id="f2_start_val">1250</span></div>
+  <div class="row"><input id="f2_end"   type="range" min="1260" max="10000" step="10" value="10000"><span id="f2_end_val">10000</span></div>
+      <div class="row"><input type="checkbox" id="show_f2" checked> <label for="show_f2" style="display:inline;margin-left:6px">Afficher f2</label></div>
+    </div>
+
+    <div class="card">
+  <label>f3(x) = -x/50 + 100 — domaine minimal 300 → maximal 1250</label>
+  <div class="row"><input id="f3_start" type="range" min="300" max="1000" step="5" value="300"><span id="f3_start_val">300</span></div>
+  <div class="row"><input id="f3_end"   type="range" min="305" max="1250" step="5" value="1250"><span id="f3_end_val">1250</span></div>
+      <div class="row"><input type="checkbox" id="show_f3" checked> <label for="show_f3" style="display:inline;margin-left:6px">Afficher f3</label></div>
+    </div>
+  </div>
+
+  <div id="plot"></div>
+
+  <div class="points small" id="info"></div>
+
+  <footer>
+    Ouvrez ce fichier en local dans votre navigateur. <br>
+    Pour une meilleure expérience, connectez-vous à internet (Plotly chargé via CDN).<br>
+    <strong>Conseil :</strong> utilisez la souris pour zoomer et faire glisser la zone du graphique.
+  </footer>
+
+<script>
+// fonctions mathématiques
+function f1(x){ return 73*x/1250.0; }
+function f2(x){ return -x/50.0 + 100.0; }
+function f3(x){ return -x/50.0 + 100.0; }
+
+// utilitaires
+function linspace(a,b,n){
+  if(n<=1) return [a];
+  var arr = new Array(n);
+  var step = (b-a)/(n-1);
+  for(var i=0;i<n;i++) arr[i]=a + step*i;
+  return arr;
+}
+
+function updatePlot(){
+  // read inputs
+  var f1s = parseFloat(document.getElementById('f1_start').value);
+  var f1e = parseFloat(document.getElementById('f1_end').value);
+  if(f1e <= f1s) { f1e = f1s + 10; document.getElementById('f1_end').value = f1e; document.getElementById('f1_end_val').innerText = f1e; }
+  var f2s = parseFloat(document.getElementById('f2_start').value);
+  var f2e = parseFloat(document.getElementById('f2_end').value);
+  if(f2e <= f2s) { f2e = f2s + 10; document.getElementById('f2_end').value = f2e; document.getElementById('f2_end_val').innerText = f2e; }
+  var f3s = parseFloat(document.getElementById('f3_start').value);
+  var f3e = parseFloat(document.getElementById('f3_end').value);
+  if(f3e <= f3s) { f3e = f3s + 5; document.getElementById('f3_end').value = f3e; document.getElementById('f3_end_val').innerText = f3e; }
+
+  // sample points
+  var n = 300;
+  var traces = [];
+
+  if(document.getElementById('show_f1').checked){
+    var xs = linspace(f1s,f1e,n);
+    var ys = xs.map(f1);
+    traces.push({ x: xs, y: ys, name: 'f1(x)=73x/1250', mode:'lines', line:{width:2} });
+  }
+  if(document.getElementById('show_f2').checked){
+    var xs = linspace(f2s,f2e,n);
+    var ys = xs.map(f2);
+    traces.push({ x: xs, y: ys, name: 'f2(x)=-x/50+100', mode:'lines', line:{width:2, dash:'dash'} });
+    // mark zero if inside interval
+    var zero = 5000;
+    if(zero >= f2s && zero <= f2e){
+      traces.push({ x:[zero], y:[f2(zero)], name:'zéro f2', mode:'markers+text', text:['0'], textposition:'top center', marker:{size:10,symbol:'x'} });
+    }
+  }
+  if(document.getElementById('show_f3').checked){
+    var xs = linspace(f3s,f3e,n);
+    var ys = xs.map(f3);
+    traces.push({ x: xs, y: ys, name: 'f3(x)=-x/50+100', mode:'lines', line:{width:2, dash:'dot'} });
+  }
+
+  var layout = {
+    title: 'Courbes interactives des fonctions',
+    xaxis: { title:'x' },
+    yaxis: { title:'f(x)' },
+    legend: { orientation:'h' },
+    margin: { t:50, l:60, r:20, b:60 }
+  };
+
+  Plotly.newPlot('plot', traces, layout, {responsive: true});
+
+  // info text summary
+  var info = [];
+  info.push('f1 intervalle: ['+f1s+' ; '+f1e+']');
+  info.push('f2 intervalle: ['+f2s+' ; '+f2e+']');
+  info.push('f3 intervalle: ['+f3s+' ; '+f3e+']');
+  // sample some key values
+  var k = ' — Points clés : f1(start)=' + (Math.round(f1(f1s)*100)/100) + ', f1(end)=' + (Math.round(f1(f1e)*100)/100);
+  k += ' ; f2(start)=' + (Math.round(f2(f2s)*100)/100) + ', f2(end)=' + (Math.round(f2(f2e)*100)/100);
+  k += ' ; f3(start)=' + (Math.round(f3(f3s)*100)/100) + ', f3(end)=' + (Math.round(f3(f3e)*100)/100);
+  document.getElementById('info').innerText = info.join(' | ') + k;
+}
+
+// wire events
+var controls = ['f1_start','f1_end','f2_start','f2_end','f3_start','f3_end','show_f1','show_f2','show_f3'];
+controls.forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(e){
+    // update displayed numeric value for range controls
+    if(id.indexOf('start')!=-1 || id.indexOf('end')!=-1){
+      var lab = id + '_val';
+      if(document.getElementById(lab)) document.getElementById(lab).innerText = document.getElementById(id).value;
+    }
+    updatePlot();
+  });
+});
+
+// initial plot
+updatePlot();
+
+</script>
+</body>
+</html>
